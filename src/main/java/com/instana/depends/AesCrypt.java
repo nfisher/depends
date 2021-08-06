@@ -12,7 +12,8 @@ import java.security.spec.KeySpec;
 import java.util.Base64;
 
 public class AesCrypt {
-    // TODO: add IV to output bytes.
+    // TODO: A fixed salt and IV are less than ideal but I'm drivin' here.
+    //       Should do something like https://github.com/1MansiS/java_crypto/blob/master/cipher/SecuredGCMUsage.java#L45-L47
     private static final byte[] IV = Base64.getDecoder().decode("V6Cu3CPzLzwczb1wA377Pg==");
     private static final byte[] SALT = "She sells, seashells, by the seashore".getBytes(StandardCharsets.UTF_8);
 
