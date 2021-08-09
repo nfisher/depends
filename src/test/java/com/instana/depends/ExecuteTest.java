@@ -13,6 +13,7 @@ import java.util.Comparator;
 import static com.instana.depends.Depends.*;
 import static com.instana.depends.DependsGraph.nowThatDepends;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.io.FileMatchers.aFileWithSize;
 import static org.hamcrest.io.FileMatchers.anExistingFile;
 
@@ -50,7 +51,7 @@ public class ExecuteTest {
         var output = "filler-no-inputs.yaml";
         var depends = nowThatDepends();
         depends.template("filler", "filler.yaml.mustache", output);
-        depends.execute(new String[]{"apply", TEMPLATE_BASE, INPUT_BASE, OUTPUT_BASE});
+        depends.execute("apply", TEMPLATE_BASE, INPUT_BASE, OUTPUT_BASE, "");
 
         assertThat(output + " file should be created", outFile(output), anExistingFile());
         assertThat(output + " file should have size", outFile(output), aFileWithSize(43));
@@ -62,14 +63,22 @@ public class ExecuteTest {
         var depends = nowThatDepends();
         depends.props("props", "filler.properties");
         depends.template("filler", "filler-prop.yaml.mustache", output, "props");
-        depends.execute(new String[]{"apply", TEMPLATE_BASE, INPUT_BASE, OUTPUT_BASE});
+        depends.execute("apply", TEMPLATE_BASE, INPUT_BASE, OUTPUT_BASE, "");
 
         assertThat(output + " file should be created", outFile(output), anExistingFile());
         assertThat(output + " file should have size", outFile(output), aFileWithSize(43));
     }
 
+    @Test(expected = RuntimeException.class)
+    public void should_fail_when_prop_is_missing() throws IncompleteGraphException {
+        var output = "filler-prop-input.yaml";
+        var depends = nowThatDepends();
+        depends.template("filler", "filler-prop.yaml.mustache", output);
+        depends.execute("apply", TEMPLATE_BASE, INPUT_BASE, OUTPUT_BASE, "");
+    }
+
     @Test
-    public void should_write_template_with_secret_input() throws IncompleteGraphException {
+    public void should_write_template_with_secret_input() {
         var output = "filler-secret-input.yaml";
         var depends = nowThatDepends();
         depends.secrets("secret", "filler.secret");
@@ -86,13 +95,13 @@ public class ExecuteTest {
         var depends = nowThatDepends();
         depends.props("props", "non-existent.properties");
         depends.template("filler", "filler-non-existent.yaml.mustache", output, "props");
-        depends.execute(new String[]{"apply", TEMPLATE_BASE, INPUT_BASE, OUTPUT_BASE});
+        depends.execute("apply", TEMPLATE_BASE, INPUT_BASE, OUTPUT_BASE, "");
     }
 
-    @Test(expected = RuntimeException.class)
-    public void should_throw_exception_with_too_few_arguments() throws IncompleteGraphException {
+    @Test
+    public void should_fail_if_too_few_arguments_are_provided() {
         var depends = nowThatDepends();
-        depends.execute(new String[]{"apply", "boop"});
+        assertThat(depends.execute(new String[]{"apply", "boop"}), is(false));
     }
 
     File outFile(String filename) {

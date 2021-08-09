@@ -8,7 +8,10 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class Template extends Dependency implements Readable, Writeable {
     private final String inputFilename;
@@ -34,7 +37,23 @@ public class Template extends Dependency implements Readable, Writeable {
     }
 
     public void render(Writer w, Map<String, Object> values) {
-        tpl.execute(w, values);
+        final Set<Object> missingKeys = new HashSet<>();
+        final Map<String, Object> m = new HashMap<>() {
+            @Override
+            public boolean containsKey(Object key) {
+                boolean hasKey = super.containsKey(key);
+                if (!hasKey) {
+                    missingKeys.add(key);
+                }
+                return hasKey;
+            }
+        };
+        m.putAll(values);
+        tpl.execute(w, m);
+
+        if (!missingKeys.isEmpty()) {
+            throw new RuntimeException("template=" + getName()+ ", missingKeys="+ missingKeys);
+        }
     }
 
     @Override

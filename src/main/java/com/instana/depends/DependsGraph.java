@@ -88,19 +88,39 @@ public class DependsGraph {
         }
     }
 
-    public void execute(String[] args) throws IncompleteGraphException {
-        if (args.length < 4) {
-            throw new RuntimeException("Too few arguments provided:\napp [cmd] [tpl] [in] [out]");
-        }
-        final String cmd = args[0];
-        final String tpl = args[1];
-        final String in = args[2];
-        final String out = args[3];
-        String secret = "";
-        if (args.length > 4) {
-            secret = args[4];
+    public boolean execute(String[] args) {
+        // https://argparse4j.github.io/examples.html
+        try {
+            if (args.length < 4) {
+                System.err.println("Too few arguments provided:\napp [cmd] [tpl] [in] [out]");
+                return false;
+            }
+            final String cmd = args[0];
+            final String tpl = args[1];
+            final String in = args[2];
+            final String out = args[3];
+            final String secret = (args.length > 4) ? args[4] : "";
+
+            System.out.println("Working: " + Paths.get(".").toAbsolutePath());
+            System.out.println("Templates: " + tpl);
+            System.out.println("Inputs: " + in);
+            System.out.println("Outputs: " + out);
+
+            execute(cmd, tpl, in, out, secret);
+        } catch(IncompleteGraphException ige) {
+            System.err.println("missing relationship for "+ ige.getMissing());
+            ige.printStackTrace();
+            return false;
+        } catch(RuntimeException rex) {
+            System.err.println("runtime error "+ rex.getMessage());
+            rex.printStackTrace();
+            return false;
         }
 
+        return true;
+    }
+
+    public void execute(String cmd, String tpl, String in, String out, String secret) throws IncompleteGraphException {
         analyse();
 
         switch (cmd) {
@@ -161,7 +181,9 @@ public class DependsGraph {
                   StringBuffer sb = new StringBuffer();
                   for (Exception ex : exceptions) {
                       sb.append(ex.getMessage());
+                      sb.append(": ");
                       sb.append("\n");
+                      ex.printStackTrace();
                   }
                   return sb.toString();
               }
